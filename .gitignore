@@ -5,3 +5,9 @@ venv/
 .env
 models/*.pkl
 data/*.csv
+
+# SQLite database files
+database/*.db
+database/*.db-journal
+database/*.db-wal
+database/*.db-shm
