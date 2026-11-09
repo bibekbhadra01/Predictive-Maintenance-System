@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <div class="logo">Predictive Maintenance</div>
+        <ul class="nav-links">
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#machines">Machines</a></li>
+            <li><a href="#prediction">Predictions</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main dashboard -->
+    <main class="container" id="dashboard">
+
+        <section class="welcome">
+            <h1>Predictive Maintenance Dashboard</h1>
+            <p>Monitor machine health and identify potential failures before they happen.</p>
+        </section>
+
+        <!-- Overview cards -->
+        <section class="stats" id="machines">
+
+            <div class="card">
+                <h3>Total Machines</h3>
+                <p class="number">24</p>
+                <span>Machines monitored</span>
+            </div>
+
+            <div class="card">
+                <h3>Healthy Machines</h3>
+                <p class="number healthy">18</p>
+                <span>Operating normally</span>
+            </div>
+
+            <div class="card">
+                <h3>Machines at Risk</h3>
+                <p class="number warning">4</p>
+                <span>Require attention</span>
+            </div>
+
+            <div class="card">
+                <h3>Maintenance Alerts</h3>
+                <p class="number danger">2</p>
+                <span>Potential failures detected</span>
+            </div>
+
+        </section>
+
+        <!-- Prediction section -->
+        <section class="prediction-section" id="prediction">
+            <h2>Machine Predictions</h2>
+            <p>Use machine sensor readings to assess its condition.</p>
+
+            <div class="prediction-box">
+                <h3>Machine Health Assessment</h3>
+                <p>Enter the machine's sensor readings to check its condition.</p>
+
+                <form id="predictionForm">
+
+                    <!-- Machine Type -->
+                    <label for="machineType">Machine Type</label>
+                    <select id="machineType" name="machineType" required>
+                        <option value="">Select machine type</option>
+                        <option value="L">L - Low</option>
+                        <option value="M">M - Medium</option>
+                        <option value="H">H - High</option>
+                    </select>
+
+                    <!-- Sensor readings -->
+                    <label for="airTemperature">Air Temperature (K)</label>
+                    <input type="number" id="airTemperature" name="airTemperature" step="any" required>
+
+                    <label for="processTemperature">Process Temperature (K)</label>
+                    <input type="number" id="processTemperature" name="processTemperature" step="any" required>
+
+                    <label for="rotationalSpeed">Rotational Speed (RPM)</label>
+                    <input type="number" id="rotationalSpeed" name="rotationalSpeed" step="any" required>
+
+                    <label for="torque">Torque (Nm)</label>
+                    <input type="number" id="torque" name="torque" step="any" required>
+
+                    <label for="toolWear">Tool Wear (minutes)</label>
+                    <input type="number" id="toolWear" name="toolWear" step="any" required>
+
+                    <button type="submit">Check Machine Health</button>
+
+                </form>
+
+                <!-- Display prediction here only once -->
+                <div id="predictionResult" aria-live="polite"></div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Predictive Maintenance System | Machine Health Monitoring</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

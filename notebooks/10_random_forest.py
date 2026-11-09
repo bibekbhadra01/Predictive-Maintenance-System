@@ -1,4 +1,6 @@
 import pandas as pd
+import joblib
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
@@ -6,14 +8,29 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
+# Find the project root folder
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 # Load dataset
-df = pd.read_csv("../data/data.csv")
+df = pd.read_csv(PROJECT_ROOT / "data" / "data.csv")
+
+# Standardize dataset column names if they include units
+df = df.rename(columns={
+    "Air temperature [K]": "Air temperature",
+    "Process temperature [K]": "Process temperature",
+    "Rotational speed [rpm]": "Rotational speed",
+    "Torque [Nm]": "Torque",
+    "Tool wear [min]": "Tool wear"
+})
 
 # Separate features and target
-X = df.drop(columns=[
-    "Machine failure",
-    "TWF", "HDF", "PWF", "OSF", "RNF"
-])
+X = df.drop(
+    columns=[
+        "Machine failure", "TWF", "HDF", "PWF", "OSF", "RNF",
+        "UDI", "Product ID"
+    ],
+    errors="ignore"
+)
 y = df["Machine failure"]
 
 # Identify feature types
@@ -34,7 +51,8 @@ preprocessor = ColumnTransformer([
 
 # Split the data
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
+    X,
+    y,
     test_size=0.2,
     random_state=42,
     stratify=y
@@ -62,3 +80,12 @@ print(confusion_matrix(y_test, y_pred))
 
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred, zero_division=0))
+
+# Save the trained model
+model_dir = PROJECT_ROOT / "models"
+model_dir.mkdir(exist_ok=True)
+
+model_path = model_dir / "random_forest_model.pkl"
+joblib.dump(model, model_path)
+
+print(f"\nRandom Forest model saved successfully at: {model_path}")

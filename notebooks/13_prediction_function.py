@@ -3,8 +3,10 @@ import joblib # used to save and load the data model
 import math
 
 # Load the saved Random Forest model
-model_path = "../models/random_forest_model.pkl"
+from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+model_path = PROJECT_ROOT / "models" / "random_forest_model.pkl"
 model = joblib.load(model_path)
 
 print("Model loaded successfully!")
