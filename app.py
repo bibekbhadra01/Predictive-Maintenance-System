@@ -5,10 +5,17 @@ from pathlib import Path
 import importlib.util
 import sys
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="Frontend",
+    static_url_path="/static"
+)
 CORS(app)
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+@app.route("/")
+def home():
+    return app.send_static_file("index.html")
 
 # Load the existing ML prediction function.
 prediction_file = (
