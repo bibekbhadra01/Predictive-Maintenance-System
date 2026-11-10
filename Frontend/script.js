@@ -1,59 +1,208 @@
 
+const API_BASE_URL = "http://127.0.0.1:5000";
 
 const predictionForm = document.getElementById("predictionForm");
 const predictionResult = document.getElementById("predictionResult");
 
+const machineIdField = document.getElementById("machineId");
+const machineTypeField = document.getElementById("machineType");
+
+// Machine names used for display in the dropdown.
+const machineNames = {
+    "MCH-001": "Electric Motor",
+    "MCH-002": "Centrifugal Pump",
+    "MCH-003": "Industrial Gearbox",
+    "MCH-004": "Air Compressor",
+    "MCH-005": "Conveyor System",
+    "MCH-006": "Hydraulic Press"
+};
+
+// Load machines from the database through Flask.
+async function loadMachines() {
+    if (!machineIdField || !machineTypeField) return;
+
+    try {
+        machineIdField.innerHTML =
+            '<option value="">Loading machines...</option>';
+
+        const response = await fetch(`${API_BASE_URL}/api/machines`);
+
+        if (!response.ok) {
+            throw new Error(`Could not load machines (${response.status})`);
+        }
+
+        const data = await response.json();
+
+        // Support different possible Flask response formats.
+        const machines = Array.isArray(data)
+            ? data
+            : data.machines || data.data || [];
+
+        if (!machines.length) {
+            throw new Error("No machines were found in the database.");
+        }
+
+        machineIdField.innerHTML =
+            '<option value="">Select a machine</option>';
+
+        machines.forEach(machine => {
+            const machineId = machine.machine_id;
+            const machineType = machine.machine_type;
+
+            if (!machineId || !["L", "M", "H"].includes(machineType)) {
+                return;
+            }
+
+            const machineName =
+                machine.name ||
+                machine.machine_name ||
+                machineNames[machineId] ||
+                "Industrial Machine";
+
+            const typeLabel = {
+                L: "Low",
+                M: "Medium",
+                H: "High"
+            }[machineType];
+
+            const option = document.createElement("option");
+
+            option.value = machineId;
+            option.textContent =
+                `${machineId} - ${machineName} (${machineType} - ${typeLabel})`;
+
+            option.dataset.machineType = machineType;
+
+            machineIdField.appendChild(option);
+        });
+
+        if (machineIdField.options.length <= 1) {
+            throw new Error("No valid machine profiles were returned.");
+        }
+
+        machineIdField.disabled = false;
+
+    } catch (error) {
+        console.error("Machine loading error:", error);
+
+        machineIdField.innerHTML =
+            '<option value="">Unable to load machines</option>';
+
+        machineIdField.disabled = true;
+
+        showResult(
+            `Could not load machines: ${error.message}. Make sure Flask is running.`,
+            "error"
+        );
+    }
+}
+
+// Automatically set machine type when a machine is selected.
+if (machineIdField && machineTypeField) {
+    machineIdField.addEventListener("change", function () {
+        const selectedOption =
+            machineIdField.options[machineIdField.selectedIndex];
+
+        const selectedType =
+            selectedOption?.dataset.machineType || "";
+
+        machineTypeField.value = selectedType;
+    });
+}
+
+// Display messages.
+function showResult(message, type) {
+    if (!predictionResult) return;
+
+    predictionResult.textContent = message;
+    styleResult(type);
+}
+
+// Style prediction results.
+function styleResult(type) {
+    if (!predictionResult) return;
+
+    predictionResult.style.display = "block";
+    predictionResult.style.padding = "20px";
+    predictionResult.style.marginTop = "20px";
+    predictionResult.style.borderRadius = "10px";
+    predictionResult.style.border = "1px solid";
+    predictionResult.style.lineHeight = "1.6";
+
+    if (type === "success") {
+        predictionResult.style.color = "#166534";
+        predictionResult.style.backgroundColor = "#f0fdf4";
+        predictionResult.style.borderColor = "#bbf7d0";
+
+    } else if (type === "failure" || type === "error") {
+        predictionResult.style.color = "#b91c1c";
+        predictionResult.style.backgroundColor = "#fef2f2";
+        predictionResult.style.borderColor = "#fecaca";
+
+    } else {
+        predictionResult.style.color = "#1d4ed8";
+        predictionResult.style.backgroundColor = "#eff6ff";
+        predictionResult.style.borderColor = "#bfdbfe";
+    }
+}
+
+// Submit prediction form.
 if (predictionForm && predictionResult) {
     predictionForm.addEventListener("submit", async function (event) {
-        // Prevent the page from refreshing
         event.preventDefault();
 
-        const machineTypeField = document.getElementById("machineType");
-        const airTemperatureField = document.getElementById("airTemperature");
-        const processTemperatureField = document.getElementById("processTemperature");
-        const rotationalSpeedField = document.getElementById("rotationalSpeed");
-        const torqueField = document.getElementById("torque");
-        const toolWearField = document.getElementById("toolWear");
+        const machineId = machineIdField.value;
+        const machineType = machineTypeField.value;
 
-        // Check that all required fields exist
-        if (
-            !machineTypeField ||
-            !airTemperatureField ||
-            !processTemperatureField ||
-            !rotationalSpeedField ||
-            !torqueField ||
-            !toolWearField
-        ) {
-            showResult("Error: One or more form fields are missing from index.html.", "error");
+        const airTemperatureField =
+            document.getElementById("airTemperature");
+
+        const processTemperatureField =
+            document.getElementById("processTemperature");
+
+        const rotationalSpeedField =
+            document.getElementById("rotationalSpeed");
+
+        const torqueField =
+            document.getElementById("torque");
+
+        const toolWearField =
+            document.getElementById("toolWear");
+
+        if (!machineId) {
+            showResult("Please select a machine first.", "error");
             return;
         }
 
-        const machineType = machineTypeField.value;
+        if (!["L", "M", "H"].includes(machineType)) {
+            showResult("Please select a valid machine.", "error");
+            return;
+        }
+
+        const fields = [
+            airTemperatureField,
+            processTemperatureField,
+            rotationalSpeedField,
+            torqueField,
+            toolWearField
+        ];
+
+        if (fields.some(field => !field)) {
+            showResult("One or more sensor input fields are missing.", "error");
+            return;
+        }
+
+        if (fields.some(field => field.value.trim() === "")) {
+            showResult("Please fill in all five sensor readings.", "error");
+            return;
+        }
+
         const airTemperature = Number(airTemperatureField.value);
         const processTemperature = Number(processTemperatureField.value);
         const rotationalSpeed = Number(rotationalSpeedField.value);
         const torque = Number(torqueField.value);
         const toolWear = Number(toolWearField.value);
 
-        // Validate machine type
-        if (!["L", "M", "H"].includes(machineType)) {
-            showResult("Please select a machine type: L, M, or H.", "error");
-            return;
-        }
-
-        // Validate that all fields have values
-        if (
-            airTemperatureField.value.trim() === "" ||
-            processTemperatureField.value.trim() === "" ||
-            rotationalSpeedField.value.trim() === "" ||
-            torqueField.value.trim() === "" ||
-            toolWearField.value.trim() === ""
-        ) {
-            showResult("Please fill in all five sensor readings.", "error");
-            return;
-        }
-
-        // Validate sensor readings
         if (
             !Number.isFinite(airTemperature) ||
             !Number.isFinite(processTemperature) ||
@@ -66,27 +215,32 @@ if (predictionForm && predictionResult) {
             torque < 0 ||
             toolWear < 0
         ) {
-            showResult("Please enter valid readings. Temperatures and speed must be positive; torque and tool wear cannot be negative.", "error");
+            showResult(
+                "Enter valid readings. Temperatures and speed must be positive; torque and tool wear cannot be negative.",
+                "error"
+            );
             return;
         }
 
+        const submitButton =
+            predictionForm.querySelector('button[type="submit"]');
+
         showResult("Analyzing machine condition. Please wait...", "loading");
 
-        const submitButton = predictionForm.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.textContent = "Analyzing...";
         }
 
         try {
-            console.log("Sending prediction request to Flask backend...");
-
-            const response = await fetch("http://127.0.0.1:5000/predict", {
+            // IMPORTANT: machine_id is now included in the request.
+            const response = await fetch(`${API_BASE_URL}/predict`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
+                    machine_id: machineId,
                     machine_type: machineType,
                     air_temperature: airTemperature,
                     process_temperature: processTemperature,
@@ -96,28 +250,39 @@ if (predictionForm && predictionResult) {
                 })
             });
 
-            const result = await response.json();
+            const result = await response.json().catch(() => ({}));
 
             console.log("Backend response:", result);
 
             if (!response.ok) {
-                throw new Error(result.error || `Server error: ${response.status}`);
+                throw new Error(
+                    result.error || `Server error: ${response.status}`
+                );
             }
 
-            const failureDetected = Number(result.predicted_failure) === 1;
+            const failureDetected =
+                Number(result.predicted_failure) === 1;
 
-            // Build the prediction result
             predictionResult.replaceChildren();
 
             const heading = document.createElement("h3");
+
             heading.textContent = failureDetected
                 ? "⚠️ Potential Machine Failure"
                 : "✅ No Failure Predicted";
 
+            predictionResult.appendChild(heading);
+
             const details = [
-                ["Status", result.status],
-                ["Prediction ID", result.prediction_id],
+                ["Machine ID", result.machine_id || machineId],
                 ["Machine Type", machineType],
+                ["Prediction ID", result.prediction_id],
+                [
+                    "Status",
+                    result.status ||
+                    result.prediction_status ||
+                    (failureDetected ? "Failure Predicted" : "Healthy")
+                ],
                 ["Air Temperature", `${airTemperature} K`],
                 ["Process Temperature", `${processTemperature} K`],
                 ["Rotational Speed", `${rotationalSpeed} RPM`],
@@ -125,22 +290,22 @@ if (predictionForm && predictionResult) {
                 ["Tool Wear", `${toolWear} minutes`]
             ];
 
-            predictionResult.appendChild(heading);
-
             details.forEach(([label, value]) => {
                 const paragraph = document.createElement("p");
                 const strong = document.createElement("strong");
 
                 strong.textContent = `${label}: `;
+
                 paragraph.appendChild(strong);
-                paragraph.appendChild(document.createTextNode(String(value)));
+                paragraph.appendChild(
+                    document.createTextNode(String(value ?? "N/A"))
+                );
 
                 predictionResult.appendChild(paragraph);
             });
 
             styleResult(failureDetected ? "failure" : "success");
 
-            // Bring the result into view
             predictionResult.scrollIntoView({
                 behavior: "smooth",
                 block: "nearest"
@@ -150,43 +315,19 @@ if (predictionForm && predictionResult) {
             console.error("Prediction error:", error);
 
             showResult(
-                `Prediction failed: ${error.message}. Check that the backend is running and the database is set up.`,
+                `Prediction failed: ${error.message}. Check that Flask is running.`,
                 "error"
             );
 
         } finally {
             if (submitButton) {
                 submitButton.disabled = false;
-                submitButton.textContent = "Check Machine Health";
+                submitButton.innerHTML =
+                    'Analyze Machine Health <span>→</span>';
             }
         }
     });
 }
 
-function showResult(message, type) {
-    predictionResult.textContent = message;
-    styleResult(type);
-}
-
-function styleResult(type) {
-    predictionResult.style.display = "block";
-    predictionResult.style.padding = "20px";
-    predictionResult.style.marginTop = "20px";
-    predictionResult.style.borderRadius = "10px";
-    predictionResult.style.border = "1px solid";
-    predictionResult.style.lineHeight = "1.6";
-
-    if (type === "success") {
-        predictionResult.style.color = "#166534";
-        predictionResult.style.backgroundColor = "#f0fdf4";
-        predictionResult.style.borderColor = "#bbf7d0";
-    } else if (type === "failure" || type === "error") {
-        predictionResult.style.color = "#b91c1c";
-        predictionResult.style.backgroundColor = "#fef2f2";
-        predictionResult.style.borderColor = "#fecaca";
-    } else {
-        predictionResult.style.color = "#1d4ed8";
-        predictionResult.style.backgroundColor = "#eff6ff";
-        predictionResult.style.borderColor = "#bfdbfe";
-    }
-}
+// Load machine profiles when the dashboard opens.
+loadMachines();
