@@ -538,6 +538,36 @@ body {
     .analytics-panel { padding: 15px; }
     .chart-wrap { height: 220px; }
 }
+/* Circular failure alert */
+.latest-alert-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.latest-alert-indicator {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFE4E9;
+    border: 2px solid #F3B9C5;
+    color: #B92E4B;
+    font-size: 23px;
+    font-weight: 800;
+    box-shadow: 0 0 0 5px rgba(220, 82, 107, 0.08);
+}
+
+.latest-alert-message {
+    color: #B92E4B !important;
+    font-size: 12px !important;
+    font-weight: 700;
+    margin: 0 !important;
+}
 </style>
 </head>
 
@@ -1262,21 +1292,33 @@ function renderLatest(records) {
 
     const machineId = getMachineId(latest);
     const date = getRecordDate(latest);
-
     resultBox.innerHTML = `
-        <p class="eyebrow">LATEST AI RESULT</p>
-        <span class="result-status ${statusClass}">${label}</span>
-        <h3>${failure === true ? "Failure risk identified" :
-              failure === false ? "No failure predicted" :
-              "Prediction result recorded"}</h3>
-        <p><strong>Machine:</strong> ${machineId}</p>
-        <p><strong>Machine name:</strong> ${getMachineName(machineId)}</p>
-        <p><strong>Machine type:</strong> ${safeText(getMachineType(latest))}</p>
-        <p><strong>Prediction ID:</strong> ${safeText(latest.id)}</p>
-        <p><strong>Date:</strong> ${date ? date.toLocaleString() : "Not available"}</p>
-        <p><strong>Model status:</strong> ${safeText(latest.prediction_status || latest.status)}</p>
-    `;
+    <p class="eyebrow">LATEST AI RESULT</p>
 
+    <span class="result-status ${statusClass}">${label}</span>
+
+    ${failure === true ? `
+        <div class="latest-alert-row">
+            <div class="latest-alert-indicator">
+                <span>!</span>
+            </div>
+            <p class="latest-alert-message">
+                Alert: Machine requires immediate attention
+            </p>
+        </div>
+    ` : ""}
+
+    <h3>${failure === true ? "Failure risk identified" :
+          failure === false ? "No failure predicted" :
+          "Prediction result recorded"}</h3>
+
+    <p><strong>Machine:</strong> ${machineId}</p>
+    <p><strong>Machine name:</strong> ${getMachineName(machineId)}</p>
+    <p><strong>Machine type:</strong> ${safeText(getMachineType(latest))}</p>
+    <p><strong>Prediction ID:</strong> ${safeText(latest.id)}</p>
+    <p><strong>Date:</strong> ${date ? date.toLocaleString() : "Not available"}</p>
+    <p><strong>Model status:</strong> ${safeText(latest.prediction_status || latest.status)}</p>
+`;
     metricsBox.innerHTML = `
         <div class="sensor-metric">
             <small>Air Temperature</small>

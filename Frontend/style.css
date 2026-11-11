@@ -1577,3 +1577,35 @@ button, .primary-button {
 .app-layout .sidebar .system-status small {
     color: #E0DAFF !important;
 }
+/* Circular failure alert */
+.latest-alert-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 15px 0;
+    padding: 12px;
+    background: #fff0f2;
+    border: 1px solid #f5cbd3;
+    border-radius: 12px;
+}
+
+.latest-alert-indicator {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e64d68;
+    color: white;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.latest-alert-message {
+    color: #c52e4b !important;
+    font-size: 12px !important;
+    font-weight: 700;
+    margin: 0 !important;
+}
