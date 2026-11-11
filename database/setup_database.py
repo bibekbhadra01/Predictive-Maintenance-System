@@ -1,7 +1,8 @@
 
 import sqlite3
-from pathlib import Path
+from db_config import DATABASE_PATH
 
+<<<<<<< HEAD
 DATABASE_PATH = Path(__file__).parent / "maintenance.db"
 
 MACHINES = [
@@ -13,6 +14,17 @@ MACHINES = [
     ("MCH-006", "H"),
 ]
 
+=======
+MACHINES = [
+    ("MCH-001", "L"),
+    ("MCH-002", "M"),
+    ("MCH-003", "H"),
+    ("MCH-004", "L"),
+    ("MCH-005", "M"),
+    ("MCH-006", "H"),
+]
+
+>>>>>>> 3198136 (Update database setup and testing)
 connection = sqlite3.connect(DATABASE_PATH)
 cursor = connection.cursor()
 
@@ -39,6 +51,20 @@ CREATE TABLE IF NOT EXISTS predictions (
 )
 """)
 
+<<<<<<< HEAD
+=======
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    machine_id TEXT NOT NULL,
+    prediction_id INTEGER,
+    message TEXT NOT NULL,
+    is_resolved INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+>>>>>>> 3198136 (Update database setup and testing)
 # Add machine_id to an existing predictions table if necessary.
 columns = [
     row[1] for row in cursor.execute(
@@ -51,6 +77,12 @@ if "machine_id" not in columns:
         "ALTER TABLE predictions ADD COLUMN machine_id TEXT"
     )
 
+<<<<<<< HEAD
+=======
+if "confidence" not in columns:
+    cursor.execute("ALTER TABLE predictions ADD COLUMN confidence REAL")    
+
+>>>>>>> 3198136 (Update database setup and testing)
 # Insert the six profiles without overwriting existing records.
 cursor.executemany("""
 INSERT OR IGNORE INTO machines (machine_id, machine_type)
